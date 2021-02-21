@@ -1,7 +1,10 @@
 FROM debian:buster
 
 RUN apt update \
-    && apt install -y curl unzip \
+    && apt install -y \
+        curl \
+        unzip \
+        ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Kubectl
