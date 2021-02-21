@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+function print_usage {
+    echo "Usage: $0 --source_context=[context_name] --source_deployment=[deployment_name] --source_port=[port_number] --target_context=[name] --target_pod=[pod_name] --target_port=[port_number]"
+    exit 1
+}
+
+#####################
+## Parse Arguments ##
+#####################
+
+# Source settings
+source_context=
+source_deployment=
+source_port=
+
+# Target settings
+target_context=
+target_pod=
+target_port=
+
+while [[ $# -gt 0 ]]
+do
+key="$1"
+case $key in
+
+    --source_context=*)
+    source_context="${key#*=}"
+    shift # past argument=value
+    ;;
+
+    --source_deployment=*)
+    source_deployment="${key#*=}"
+    shift # past argument=value
+    ;;
+
+    --source_port=*)
+    source_port="${key#*=}"
+    shift # past argument=value
+    ;;
+
+    --target_context=*)
+    target_context="${key#*=}"
+    shift # past argument=value
+    ;;
+
+    --target_pod=*)
+    target_pod="${key#*=}"
+    shift # past argument=value
+    ;;
+
+    --target_port=*)
+    target_port="${key#*=}"
+    shift # past argument=value
+    ;;
+
+    *)    # unknown option
+      print_usage
+    ;;
+
+esac
+done
+
+# Ensure that all required arguments were specified
+#
+# TODO(aviau): Better defaults. There are some things we can guess using
+# kubectl commands
+#
+
+if [[ -z "${source_context}" ]] \
+    || [[ -z "${source_deployment}" ]] \
+    || [[ -z "${source_port}" ]] \
+    || [[ -z "${target_context}" ]] \
+    || [[ -z "${target_pod}" ]] \
+    || [[ -z "${target_port}" ]]; then
+    print_usage
+fi
+
+####################################
+## Prepare Telepresence arguments ##
+####################################
+
+osx_gcloud_path=${HOME}/Applications/gcloud/google-cloud-sdk/bin/gcloud
+docker_cmd="\
+    # Make tele-proxy works on OSX.
+    mkdir -p \$(dirname $osx_gcloud_path); \
+    ln -s /usr/bin/gcloud $osx_gcloud_path; \
+    while true; do kubectl --context ${target_context} port-forward ${target_pod} ${source_port}:${target_port} || echo 'retrying... ' && sleep 2; done\
+"
+
+docker_options="\
+    -v $HOME/.aws:/root/.aws \
+    -v $HOME/.kube/config:/root/.kube/config \
+    -v $HOME/.config/gcloud:/root/.config/gcloud \
+    -e AWS_ACCESS_KEY_ID="" \
+    -e AWS_SECRET_ACCESS_KEY="" \
+"
+docker_image=flared.io/teleproxy
+
+######################
+## Run Telepresence ##
+######################
+
+telepresence \
+    --context ${source_context} \
+    ${tele_options[@]} \
+    --docker-run \
+        --rm -it \
+        -e CMD="$docker_cmd" \
+        ${docker_options[@]} \
+        ${docker_image} \
+        bash -c "$deployment_cmd";
