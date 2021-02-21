@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -eox pipefail
 
 function print_usage {
     echo "Usage: $0 --source_context=[context_name] --source_deployment=[deployment_name] --source_port=[port_number] --target_context=[name] --target_pod=[pod_name] --target_port=[port_number]"
@@ -87,17 +87,25 @@ docker_cmd="\
     # Make tele-proxy works on OSX.
     mkdir -p \$(dirname $osx_gcloud_path); \
     ln -s /usr/bin/gcloud $osx_gcloud_path; \
-    while true; do kubectl --context ${target_context} port-forward ${target_pod} ${source_port}:${target_port} || echo 'retrying... ' && sleep 2; done\
+    while true; do AWS_PROFILE=production aws sts get-caller-identity && kubectl --context ${target_context} port-forward ${target_pod} ${source_port}:${target_port} || echo 'retrying... ' && sleep 2; done\
 "
 
-docker_options="\
-    -v $HOME/.aws:/root/.aws \
-    -v $HOME/.kube/config:/root/.kube/config \
-    -v $HOME/.config/gcloud:/root/.config/gcloud \
-    -e AWS_ACCESS_KEY_ID="" \
-    -e AWS_SECRET_ACCESS_KEY="" \
-"
+# Mount:
+# - kubectl config
+# - aws CLI config
+# - gcloud CLI config
+docker_options=( )
+docker_options+=("-v" "${HOME}/.aws:/root/.aws" )
+docker_options+=("-v" "${HOME}/.kube/config:/root/.kube/config" )
+docker_options+=("-v" "${HOME}/.config/gcloud:/root/.config/gcloud" )
+docker_options+=("-e" 'AWS_ACCESS_KEY_ID=""')
+docker_options+=("-e" 'AWS_SECRET_ACCESS_KEY=""')
+
 docker_image=flared.io/teleproxy
+
+# TODO(aviau): Support statefulset too. See the --deployment-type flag of github.com/flared/telepresence
+telepresence_options=( )
+telepresence_options+=( "--swap-deployment" "${source_deployment}" )
 
 ######################
 ## Run Telepresence ##
@@ -105,10 +113,10 @@ docker_image=flared.io/teleproxy
 
 telepresence \
     --context ${source_context} \
-    ${tele_options[@]} \
+    ${telepresence_options[@]} \
     --docker-run \
         --rm -it \
-        -e CMD="$docker_cmd" \
+        --user=root:root \
         ${docker_options[@]} \
         ${docker_image} \
-        bash -c "$deployment_cmd";
+        bash -c "${docker_cmd}";
