@@ -87,7 +87,7 @@ docker_cmd="\
     # Make tele-proxy works on OSX.
     mkdir -p \$(dirname $osx_gcloud_path); \
     ln -s /usr/bin/gcloud $osx_gcloud_path; \
-    while true; do AWS_PROFILE=production aws sts get-caller-identity && kubectl --context ${target_context} port-forward ${target_pod} ${source_port}:${target_port} || echo 'retrying... ' && sleep 2; done\
+    while true; do kubectl --context ${target_context} port-forward ${target_pod} ${source_port}:${target_port} || echo 'retrying... ' && sleep 2; done\
 "
 
 # Mount:
