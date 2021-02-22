@@ -1,0 +1,37 @@
+@startuml
+package "Your Laptop" {
+
+    [teleproxy]
+    [telepresence local]
+
+    package "Cluster A - Minikube" {
+        [telepresence incluster]
+        [other pod]
+    }
+
+}
+
+package "Cluster B - Remote" {
+    [target pod]
+}
+
+[telepresence incluster] --> [telepresence local]
+[telepresence local] -> [teleproxy]
+[teleproxy] --> [target pod]
+[other pod] --> [telepresence incluster]
+
+note left of [telepresence incluster]
+  Replaces source_deployment.
+  (someservice in our example)
+endnote
+
+note left of [telepresence local]: Receives traffic from telepresence incluster.
+
+note right of [teleproxy]: Runs `kubectl port-forward`
+
+note right of [other pod]
+ Normally uses source_deployment but now using
+ the replacement pod without noticing.
+endnote
+
+@enduml
