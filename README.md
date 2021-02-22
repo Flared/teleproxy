@@ -4,6 +4,8 @@ Replace a k8s deployment by a proxy to a pod in another cluster.
 
 Teleproxy works by replacing your local deployment by a pod running `kubectl port-forward` pointing to another cluster. We use it at Flare Systems to keep our developement setup light and still be able to quickly connect our test apps to a more realistic "staging" environment.
 
+![Deployment diagram](https://raw.githubusercontent.com/Flared/teleproxy/main/deployment_diagram.svg)
+
 ## Dependencies
 
 - kubectl
