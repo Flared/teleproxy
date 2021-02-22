@@ -1,10 +1,70 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -eox pipefail
 
+#############
+## Globals ##
+#############
+kubectl=$(which kubectl)
+
+###############
+## Functions ##
+###############
+
+# Args: None
 function print_usage {
-    echo "Usage: $0 --source_context=[context_name] --source_deployment=[deployment_name] --source_port=[port_number] --target_context=[name] --target_pod=[pod_name] --target_port=[port_number]"
+    echo "Usage: $0 --source_context=[context_name] --source_deployment=[deployment_name] --source_port=[port_number] --target_context=[name] --target_deployment|--target_pod=[deployment_name|pod_name] --target_port=[port_number]"
     exit 1
+}
+
+# Args:
+#  $1: kubectl context
+#  $2: deployment name
+function get_k8s_replicaset_name_from_deployment_name {
+    local kubectl_context=$1
+    local deployment_name=$2
+    local replicaset_name=$(
+      ${kubectl} --context=${kubectl_context} get replicasets -o json | \
+          jq \
+              --raw-output \
+                  ".items \
+                      | map(select(.metadata.ownerReferences[0].kind == \"Deployment\" and \
+                          .metadata.ownerReferences[0].name == \"${deployment_name}\" and \
+                          .status.replicas > 0)) \
+                      | map(.metadata.name)[0] \
+                  "
+    )
+    echo ${replicaset_name}
+}
+
+# Args:
+#  $1: kubectl context
+#  $2: replicaset name
+function get_k8s_pod_name_from_replicaset_name {
+    local kubectl_context=$1
+    local replicaset_name=$2
+    local pod_name=$(
+        ${kubectl} --context=${kubectl_context} get pods -o json | \
+            jq \
+                --raw-output \
+                    ".items \
+                        | map(select(.metadata.ownerReferences[0].kind == \"ReplicaSet\" and \
+                              .metadata.ownerReferences[0].name == \"${replicaset_name}\")) \
+                        | map(.metadata.name)[0] \
+                    "
+    )
+    echo ${pod_name}
+}
+
+# Args:
+#  $1: kubectl context
+#  $2: deployment name
+function get_k8s_pod_name_from_deployment_name {
+    local kubectl_context=$1
+    local deployment_name=$2
+    local replicaset_name=$(get_k8s_replicaset_name_from_deployment_name ${kubectl_context} ${deployment_name})
+    local pod_name=$(get_k8s_pod_name_from_replicaset_name ${kubectl_context} ${replicaset_name})
+    echo ${pod_name}
 }
 
 #####################
@@ -18,6 +78,7 @@ source_port=
 
 # Target settings
 target_context=
+target_deployment=
 target_pod=
 target_port=
 
@@ -46,6 +107,11 @@ case $key in
     shift # past argument=value
     ;;
 
+    --target_deployment=*)
+    target_deployment="${key#*=}"
+    shift # past argument=value
+    ;;
+
     --target_pod=*)
     target_pod="${key#*=}"
     shift # past argument=value
@@ -57,26 +123,30 @@ case $key in
     ;;
 
     *)    # unknown option
+      echo "Unknown option ${key}"
       print_usage
     ;;
 
 esac
 done
 
-# Ensure that all required arguments were specified
-#
-# TODO(aviau): Better defaults. There are some things we can guess using
-# kubectl commands
-#
+# Ensure that all mandatory arguments were specified
 
 if [[ -z "${source_context}" ]] \
     || [[ -z "${source_deployment}" ]] \
     || [[ -z "${source_port}" ]] \
     || [[ -z "${target_context}" ]] \
-    || [[ -z "${target_pod}" ]] \
     || [[ -z "${target_port}" ]]; then
     print_usage
 fi
+
+# Only one of target_deployment and target_pod is required
+if [[ -z "${target_deployment}" ]] && [[ -z "${target_pod}" ]]; then
+    print_usage
+elif [[ -z "${target_pod}" ]]; then
+    target_pod=$(get_k8s_pod_name_from_deployment_name ${target_context} ${target_deployment})
+fi
+
 
 ####################################
 ## Prepare Telepresence arguments ##
