@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eox pipefail
+set -eo pipefail
 
 function print_usage {
     echo "Usage: $0 --source_context=[context_name] --source_deployment=[deployment_name] --source_port=[port_number] --target_context=[name] --target_pod=[pod_name] --target_port=[port_number]"
@@ -98,8 +98,8 @@ docker_options=( )
 docker_options+=("-v" "${HOME}/.aws:/root/.aws" )
 docker_options+=("-v" "${HOME}/.kube/config:/root/.kube/config" )
 docker_options+=("-v" "${HOME}/.config/gcloud:/root/.config/gcloud" )
-docker_options+=("-e" 'AWS_ACCESS_KEY_ID=""')
-docker_options+=("-e" 'AWS_SECRET_ACCESS_KEY=""')
+docker_options+=("-e" "AWS_ACCESS_KEY_ID" )
+docker_options+=("-e" "AWS_SECRET_ACCESS_KEY" )
 
 docker_image=flared.io/teleproxy
 
@@ -116,7 +116,6 @@ telepresence \
     ${telepresence_options[@]} \
     --docker-run \
         --rm -it \
-        --user=root:root \
         ${docker_options[@]} \
         ${docker_image} \
         bash -c "${docker_cmd}";
