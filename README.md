@@ -41,7 +41,7 @@ teleproxy <opts>
 
 ## Debugging
 
-**kubectl auth to destination cluster**: Teleproxy launches kubectl in a docker container. The teleproxy container must be able to connect to your destination cluster. Depending on your setup, it won't work out of the box. Teleproxy tries to make it easier for you by mounting some configuration files such as `~/.aws` but this list is not exhaustive and may require some adjustments.
+**kubectl auth to destination cluster**: Teleproxy launches kubectl in a docker container. The teleproxy container must be able to connect to your destination cluster. Depending on your setup, it won't work out of the box. Teleproxy tries to make it easier for you by mounting some configuration files such as `~/.aws` and by forwarding some environment variables but this list is not exhaustive and may require some adjustments. Feel free to contribute to this by modifying the script's `docker_options` and by adding your required tools to the `Dockerfile`.
 
 ## Roadmap
 
