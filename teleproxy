@@ -191,7 +191,7 @@ telepresence_options+=( "--swap-deployment" "${source_deployment}" )
 ## Run Telepresence ##
 ######################
 
-telepresence \
+TELEPRESENCE_USE_DEPLOYMENT=1 telepresence \
     --context ${source_context} \
     ${telepresence_options[@]} \
     --docker-run \
