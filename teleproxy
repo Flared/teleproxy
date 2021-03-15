@@ -71,6 +71,9 @@ function get_k8s_pod_name_from_deployment_name {
 ## Parse Arguments ##
 #####################
 
+# Port-forward settings
+listen_address="0.0.0.0"
+
 # Source settings
 source_context=
 source_deployment=
@@ -157,7 +160,14 @@ docker_cmd="\
     # Make tele-proxy works on OSX.
     mkdir -p \$(dirname $osx_gcloud_path); \
     ln -s /usr/bin/gcloud $osx_gcloud_path; \
-    while true; do kubectl --context ${target_context} port-forward ${target_pod} ${source_port}:${target_port} || echo 'retrying... ' && sleep 2; done\
+    while true; do \
+    kubectl \
+        --context ${target_context} \
+        port-forward \
+            --address=${listen_address} \
+            ${target_pod} \
+            ${source_port}:${target_port} \
+    || echo 'retrying... ' && sleep 2; done\
 "
 
 # Mount:
