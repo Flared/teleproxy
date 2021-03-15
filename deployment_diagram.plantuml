@@ -3,6 +3,7 @@ package "Your Laptop" {
 
     [teleproxy]
     [telepresence local]
+    [kubectl config]
 
     package "Cluster A - Minikube" {
         [telepresence incluster]
@@ -18,6 +19,7 @@ package "Cluster B - Remote" {
 [telepresence incluster] --> [telepresence local]
 [telepresence local] -> [teleproxy]
 [teleproxy] --> [target pod]
+[teleproxy] --> [kubectl config]
 [other pod] --> [telepresence incluster]
 
 note left of [telepresence incluster]
@@ -27,11 +29,14 @@ endnote
 
 note left of [telepresence local]: Receives traffic from telepresence incluster.
 
-note right of [teleproxy]: Runs `kubectl port-forward`
+note right of [teleproxy]
+    Runs `kubectl port-forward` and 
+    mounts your local kubectl config.
+    (files & env vars)
+endnote
 
 note right of [other pod]
  Normally uses source_deployment but now using
  the replacement pod without noticing.
 endnote
-
 @enduml
