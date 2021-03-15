@@ -45,4 +45,4 @@ teleproxy <opts>
 
 ## Roadmap
 
-**Swapping Statefulsets:** Teleproxy was based on an internal Flare Systems tool which supports swapping statefulsets using our fork of telepresence. You may take a look at it [here](https://github.com/flared/telepresence). We haven't added Statefulset support to teleproxy as we prefer to target upstream telepresence with this tool.
+**Swapping Statefulsets:** Teleproxy was based on an internal Flare Systems tool which supports swapping statefulsets using our fork of telepresence. You may take a look at it [here](https://github.com/flared/telepresence/tree/flare-master). We haven't added Statefulset support to teleproxy as we prefer to target upstream telepresence with this tool.
