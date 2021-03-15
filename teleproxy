@@ -171,7 +171,7 @@ docker_options+=("-v" "${HOME}/.config/gcloud:/root/.config/gcloud" )
 docker_options+=("-e" "AWS_ACCESS_KEY_ID" )
 docker_options+=("-e" "AWS_SECRET_ACCESS_KEY" )
 
-docker_image=flared.io/teleproxy
+docker_image=flared/teleproxy:latest
 
 # TODO(aviau): Support statefulset too. See the --deployment-type flag of github.com/flared/telepresence
 telepresence_options=( )
