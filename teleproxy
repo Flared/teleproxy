@@ -23,8 +23,8 @@ function print_usage {
 function get_k8s_replicaset_name_from_deployment_name {
     local kubectl_context=$1
     local deployment_name=$2
-    local replicaset_name=$(
-      ${kubectl} --context=${kubectl_context} get replicasets -o json | \
+    local replicaset_name; replicaset_name=$(
+      ${kubectl} --context="${kubectl_context}" get replicasets -o json | \
           jq \
               --raw-output \
                   ".items \
@@ -34,7 +34,7 @@ function get_k8s_replicaset_name_from_deployment_name {
                       | map(.metadata.name)[0] \
                   "
     )
-    echo ${replicaset_name}
+    echo "${replicaset_name}"
 }
 
 # Args:
@@ -43,8 +43,8 @@ function get_k8s_replicaset_name_from_deployment_name {
 function get_k8s_pod_name_from_replicaset_name {
     local kubectl_context=$1
     local replicaset_name=$2
-    local pod_name=$(
-        ${kubectl} --context=${kubectl_context} get pods -o json | \
+    local pod_name; pod_name=$(
+        ${kubectl} --context="${kubectl_context}" get pods -o json | \
             jq \
                 --raw-output \
                     ".items \
@@ -53,7 +53,7 @@ function get_k8s_pod_name_from_replicaset_name {
                         | map(.metadata.name)[0] \
                     "
     )
-    echo ${pod_name}
+    echo "${pod_name}"
 }
 
 # Args:
@@ -62,9 +62,9 @@ function get_k8s_pod_name_from_replicaset_name {
 function get_k8s_pod_name_from_deployment_name {
     local kubectl_context=$1
     local deployment_name=$2
-    local replicaset_name=$(get_k8s_replicaset_name_from_deployment_name ${kubectl_context} ${deployment_name})
-    local pod_name=$(get_k8s_pod_name_from_replicaset_name ${kubectl_context} ${replicaset_name})
-    echo ${pod_name}
+    local replicaset_name; replicaset_name=$(get_k8s_replicaset_name_from_deployment_name "${kubectl_context}" "${deployment_name}")
+    local pod_name; pod_name=$(get_k8s_pod_name_from_replicaset_name "${kubectl_context}" "${replicaset_name}")
+    echo "${pod_name}"
 }
 
 #####################
@@ -147,7 +147,7 @@ fi
 if [[ -z "${target_deployment}" ]] && [[ -z "${target_pod}" ]]; then
     print_usage
 elif [[ -z "${target_pod}" ]]; then
-    target_pod=$(get_k8s_pod_name_from_deployment_name ${target_context} ${target_deployment})
+    target_pod=$(get_k8s_pod_name_from_deployment_name "${target_context}" "${target_deployment}")
 fi
 
 
@@ -192,10 +192,10 @@ telepresence_options+=( "--swap-deployment" "${source_deployment}" )
 ######################
 
 TELEPRESENCE_USE_DEPLOYMENT=1 telepresence \
-    --context ${source_context} \
-    ${telepresence_options[@]} \
+    --context "${source_context}" \
+    "${telepresence_options[@]}" \
     --docker-run \
         --rm -it \
-        ${docker_options[@]} \
-        ${docker_image} \
+        "${docker_options[@]}" \
+        "${docker_image}" \
         bash -c "${docker_cmd}";
