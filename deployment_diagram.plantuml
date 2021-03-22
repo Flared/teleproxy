@@ -7,7 +7,7 @@ package "Your Laptop" {
 
     package "Cluster A - Minikube" {
         [telepresence incluster]
-        [other pod]
+        [client pod]
     }
 
 }
@@ -20,7 +20,7 @@ package "Cluster B - Remote" {
 [telepresence local] -> [teleproxy]
 [teleproxy] --> [target pod]
 [teleproxy] --> [kubectl config]
-[other pod] --> [telepresence incluster]
+[client pod] --> [telepresence incluster]
 
 note left of [telepresence incluster]
   Replaces source_deployment.
@@ -35,7 +35,7 @@ note right of [teleproxy]
     (files & env vars)
 endnote
 
-note right of [other pod]
+note right of [client pod]
  Normally uses source_deployment but now using
  the replacement pod without noticing.
 endnote
