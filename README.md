@@ -11,7 +11,7 @@ For more details, see the [initial release article](https://medium.com/flare-sys
 ## Dependencies
 
 - kubectl
-- telepresence
+- [telepresence](https://github.com/telepresenceio/telepresence)
 - jq
 
 ## Usage
